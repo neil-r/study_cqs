@@ -13,8 +13,8 @@ def conduct_evaluations(
   discussion_model_factory: discussion.DiscussionStrategyFactory
 ):
   for task in tasks:
-    if len(task.synset_options) <= 1:
-       continue
+    # if len(task.synset_options) <= 1:
+    #    continue
     try:
         prompt_handler = prompt_factory.generate_prompt(task)
         prompt_strategy_name = prompt_handler.__class__.__name__

@@ -1,5 +1,27 @@
 import typing
 import json
+from huggingface_hub import HfApi
+
+def get_model_info(model_name):
+        api = HfApi()
+        model_info = api.model_info(model_name)
+        
+        model_name = model_info.id.split("/")[-1]
+        model_size = ""  # Extract size if available in model tags
+        model_version = model_info.sha  # Model's latest commit SHA
+        
+        # Extracting model size if present in the model tags
+        for tag in model_info.tags:
+            if "B" in tag:  # e.g., "13B"
+                model_size = tag
+                break
+        
+        return {
+            "model_id": model_info.id,
+            "model_name": model_name,
+            "model_size": model_size,
+            "model_version": model_version
+        }
 
 
 class SynsetOption:
@@ -66,8 +88,10 @@ class EventExtractionTask:
     @staticmethod
     def Load_from_json(file_path:str) -> typing.List["EventExtractionTask"]:
         evaluations = []
-        with open(file_path, "r") as f:
-            obj = json.load(f)
+        with open(file_path, "r", encoding="cp1252", errors="ignore") as f:
+            obj = []
+            for line in f:
+                obj.append(json.load(line.strip))
 
             for wse_obj in obj:
                 wse = EventExtractionTask(
