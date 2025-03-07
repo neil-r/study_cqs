@@ -9,7 +9,7 @@ class Message:
 
 class Discussion:
     def __init__(self):
-        self.messages = []
+        self.messages:typing.List[Message] = []
     
     def to_json(self):
         return list(
@@ -19,7 +19,11 @@ class Discussion:
 
 class DiscussionStrategy:
     
-    def speak(self, content, role:str="user") -> typing.Tuple[Message, typing.Any]:
+    def speak(self, discussion:Discussion, content:str, role:str="user") -> typing.Tuple[Message, typing.Any]:
+        raise NotImplementedError("Abstract class, implement")
+
+    @property
+    def model_id(self) -> str:
         raise NotImplementedError("Abstract class, implement")
 
 class DiscussionStrategyFactory:

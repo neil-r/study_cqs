@@ -40,7 +40,7 @@ def read_in_maven_event_types(file_path):
     return types
 
 
-def read_in_dataset(file_path, types):
+def read_in_dataset(file_path, event_types) -> List[MavenParagraph]:
 
     annotated_paragraphs = []
 
@@ -60,7 +60,7 @@ def read_in_dataset(file_path, types):
                 ),
                 events=list(
                     c
-                    for c in data['events'] if c["type"] in types
+                    for c in data['events'] if c["type"] in event_types
                 )
             ))
             """
@@ -150,6 +150,6 @@ def read_in_dataset(file_path, types):
 
 
 if __name__ == "__main__":
-    print(len(list(r for r in read_in_dataset("data/maven/train.jsonl", types=["Attack"]) if len(r.events)> 0 )))
+    print(len(list(r for r in read_in_dataset("data/maven/train.jsonl", event_types=["Attack"]) if len(r.events)> 0 )))
 
     print(read_in_maven_event_types("data/maven/train.jsonl"))

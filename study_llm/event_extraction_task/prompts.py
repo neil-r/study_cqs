@@ -1,9 +1,9 @@
 import typing
-import random
 import json
 
 from study_llm.prompt import PromptFactory, Prompt
 from .dataset_maven import MavenParagraph
+
 
 def determine_true_false(response: str) -> typing.Optional[str]:
     try:
@@ -22,6 +22,7 @@ def determine_true_false(response: str) -> typing.Optional[str]:
         print(f"Error in determine_true_false: {e}")
         return None
 
+
 def determine_json_response(response: str) -> typing.Optional[str]:
     try:
         if response == '[]':
@@ -34,6 +35,34 @@ def determine_json_response(response: str) -> typing.Optional[str]:
     except Exception as e:
         print(f"Error in determine_json_response: {e}")
         return None
+
+
+def extract_json_list(text:str) -> str | None:
+    """
+    Extracts the first JSON list found in the given text.
+    
+    Args:
+        text (str): The input string containing a JSON list.
+    
+    Returns:
+        list: The extracted JSON list or None if no valid list is found.
+    """
+    start = text.find('[')
+    if start == -1:
+        return None  # No opening bracket found
+
+    end = text.rfind(']')
+    if end == -1:
+        return None  # No closing bracket found
+
+    json_str = text[start:end+1]
+    try:
+        return json.dumps(json.loads(json_str))
+    except json.JSONDecodeError:
+        return None  # Invalid JSON list
+
+    return None  
+
 
 class DefaultEventExistsClassificationTaskPrompt(Prompt[MavenParagraph]):
 
@@ -61,9 +90,7 @@ class DefaultEventExistsClassificationTaskPrompt(Prompt[MavenParagraph]):
     
         # Actual Case        
         try:
-            r = self.response_interpretter_function(response)
-            if r is not None:
-                self.answer_response = r
+            self.answer_response = self.response_interpretter_function(response)
         except Exception as e:
             print(f"Error handling response: {e}")
         return None
@@ -83,6 +110,10 @@ class DefaultEventExistsClassificationTaskPromptFactory(PromptFactory[MavenParag
             answer_value=len(topic.events) > 0
         )
     
+    def create_assessor_func(self):
+        return lambda expected_value, actual_value : expected_value == actual_value
+
+    
 
 class DefaultExtractEventsPrompt(Prompt[MavenParagraph]):
 
@@ -90,7 +121,7 @@ class DefaultExtractEventsPrompt(Prompt[MavenParagraph]):
                  subject: MavenParagraph,
                  topic: str,
                  answer_value: bool,
-                 response_interpretter_function=determine_json_response
+                 response_interpretter_function=extract_json_list
         ):
         self.subject = subject
         self.topic = topic
@@ -100,13 +131,11 @@ class DefaultExtractEventsPrompt(Prompt[MavenParagraph]):
 
     @property
     def content(self) -> str:
-        return f'''Consider the following paragraph.\n\n{self.subject.content}\n\nExtract events about {self.topic}. If no relevant events exist, return an empty JSON list. Otherwise return a JSON list with objects for each event identifying the type of event and the participants.\n'''
+        return f'''Consider the following paragraph.\n\n{self.subject.content}\n\nIdentify events about {self.topic}. For each event, return a JSON object with an attribute specifying the event type and, if stated, the following event meta-data as additional attributes: the cause of the event with a "cause" attribute and the datetime of the event with a "date" attribute. If no relevant events exist, return an empty JSON list. Otherwise return a JSON list with the JSON objects for each event.\n'''
     
     def handle_response(self, response: str) -> typing.Optional["Prompt[MavenParagraph]"]:
         try:
-            r = self.response_interpretter_function(response)
-            if r is not None:
-                self.answer_response = r
+            self.answer_response = self.response_interpretter_function(response)
         except Exception as e:
             print(f"Error handling response in DefaultExtractEventsPrompt: {e}")
         return None
@@ -125,3 +154,16 @@ class DefaultExtractEventsPromptFactory(PromptFactory[MavenParagraph]):
             self.topic_msg,
             answer_value=len(topic.events) > 0
         )
+    
+    def create_assessor_func(self):
+        return lambda expected_value, actual_value : expected_value == non_empty_json_list(actual_value)
+
+
+def non_empty_json_list(json_str) -> bool:
+    if json_str is None:
+        return False
+    jv = json.loads(json_str)
+    if isinstance(jv, list):
+        return len(jv) > 0
+    return False
+

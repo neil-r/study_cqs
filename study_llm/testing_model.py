@@ -1,7 +1,7 @@
 from . import discussion
 
 
-class SimpleDiscussionStrategyFactory:
+class SimpleDiscussionStrategyFactory(discussion.DiscussionStrategyFactory):
 
     def __init__(self):
         pass
@@ -13,14 +13,18 @@ class SimpleDiscussionStrategyFactory:
         return "simpleA"
 
 
-class SimpleDiscussionStrategy:
+class SimpleDiscussionStrategy(discussion.DiscussionStrategy):
 
     def __init__(self):
-        self.discussion = discussion.Discussion()
+        pass
 
-    def speak(self, content, role="user"):
+    @property
+    def model_id(self):
+        return "simpleA"
 
-        self.discussion.messages.append(discussion.Message(role,content))
+    def speak(self, d, content, role="user"):
+
+        d.messages.append(discussion.Message(role,content))
         if "True or false" in content:
             # Creating a simple response that always returns True
             response_msg = discussion.Message(
@@ -33,6 +37,6 @@ class SimpleDiscussionStrategy:
                 role="system",
                 content="[]",
             )  
-        self.discussion.messages.append(response_msg)
+        d.messages.append(response_msg)
 
         return response_msg, response_msg
