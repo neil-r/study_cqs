@@ -23,7 +23,7 @@ p_factories = [
 ]
 
 huggingface_models = [
-    "meta-llama/Llama-3.2-3B-Instruct",
+    #"meta-llama/Llama-3.2-3B-Instruct",
     #"mistralai/Mistral-7B-Instruct-v0.3",
     #"meta-llama/Llama-3.2-1B-Instruct-QLORA_INT4_EO8"
 ]

@@ -80,7 +80,7 @@ class DefaultEventExistsClassificationTaskPrompt(Prompt[MavenParagraph]):
 
     @property
     def content(self) -> str:
-        return f'''Only respond with either True or false, does the following paragraph describe one or more events about {self.topic}?\n\n{self.subject.content}\n'''
+        return f'''Only respond with either true or false, does the following paragraph describe one or more events about {self.topic}?\n\n{self.subject.content}\n'''
     
     def handle_response(self, response: str) -> typing.Optional["Prompt[MavenParagraph]"]:
         # # Test Failure Case:
