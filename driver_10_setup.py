@@ -1,23 +1,27 @@
-import study_llm.event_extraction_task.prompts as prompts
+import study_llm.event_extraction_task.dataset_rams as rams
 from dotenv import load_dotenv
 
 
 load_dotenv()  # load environment variables from .env.
 # to use huggingface models (loaded from their website) set HF_API_TOKEN in file "".env"
 
-datasets = ["data/maven/train.jsonl"]
+datasets = ["./data/RAMS_1.0c/data/test.jsonlines"]
 
 event_types = [
-    "Violence",
-    "Surrounding",
-    "Besieging",
-    "Attack",
-    "Military_operation",
-    "Hostile_encounter",
-    "Terrorism",
-    "Bearing_arms",
-    "Defending",
-    "Killing",
+    "air_or_missile_strikes",
+    "killings",
+    "invasions",
+    # "retreat",
+    "stabbings",
+    "hangings",
+    "self-directed_battles",
+    "stealings",
+    "hijackings",
+    "surrenderings",
+    "bombings",
+    "biological_attacks",
+    "chemical_poison_attacks",
+    "death_caused_by_violent_events",
 ]
 
 keywords = [
@@ -191,17 +195,24 @@ keywords = [
     "Espionage",
 ]
 
-topic_msg = (
+topic_msg = "attacks, such as " + (
     ", ".join(e.lower().replace("_", " ") for e in event_types[:-1])
     + ", or "
-    + event_types[-1].lower()
+    + event_types[-1].lower().replace("_", " ")
 )
+
+event_type_prefixes = [
+    "conflict.attack.",
+    "life.die.deathcausedbyviolentevents",
+]
 
 
 # Prepare the creator(s) of the prompts
 p_factories = [
-    prompts.DefaultEventExistsClassificationTaskPromptFactory(topic_msg),
-    prompts.DefaultExtractEventsPromptFactory(topic_msg),
+    rams.DefaultEventExistsClassificationTaskPromptFactory(
+        topic_msg, event_type_prefixes
+    ),
+    rams.DefaultExtractEventsPromptFactory(topic_msg, event_type_prefixes),
 ]
 
 huggingface_models = [
@@ -209,3 +220,14 @@ huggingface_models = [
     # "mistralai/Mistral-7B-Instruct-v0.3",
     # "meta-llama/Llama-3.2-1B-Instruct-QLORA_INT4_EO8"
 ]
+
+
+def determine_classification(topic: rams.RamsPassage) -> bool:
+
+    for event in topic.events:
+        for event_type_prefix in event_type_prefixes:
+            if event.type_indicator[0].startswith(event_type_prefix):
+                return True
+
+    return False
+
